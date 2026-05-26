@@ -1,115 +1,148 @@
-"""Console entry point for the Best Buy store application."""
+"""Command line interface for the Best Buy store application."""
 
-from products import Product
-from store import Store
-
-
-MENU = {
-    1: "List all products in store",
-    2: "Show total amount in store",
-    3: "Make an order",
-    4: "Quit",
-}
+import products
+import store
 
 
-def print_product_list(products):
-    """Print a numbered list of products."""
-    for index, product in enumerate(products, start=1):
+def setup_store():
+    """Create and return the default Best Buy store."""
+    product_list = [
+        products.Product("MacBook Air M2", price=1450, quantity=100),
+        products.Product(
+            "Bose QuietComfort Earbuds",
+            price=250,
+            quantity=500,
+        ),
+        products.Product("Google Pixel 7", price=500, quantity=250),
+    ]
+    return store.Store(product_list)
+
+
+def show_menu():
+    """Show the main menu."""
+    print()
+    print("Store Menu")
+    print("----------")
+    print("1. List all products in store")
+    print("2. Show total amount in store")
+    print("3. Make an order")
+    print("4. Quit")
+
+
+def list_products(store_instance):
+    """Print all active products with item numbers."""
+    product_list = store_instance.get_all_products()
+
+    if not product_list:
+        print("No active products available.")
+        return
+
+    for index, product in enumerate(product_list, start=1):
         print(f"{index}. {product.show()}")
 
 
-def print_menu():
-    """Print the store menu."""
-    print()
-    print("   Store Menu")
-    print("   ----------")
-    for number, text in MENU.items():
-        print(f"{number}. {text}")
+def show_total_quantity(store_instance):
+    """Print the total product quantity in the store."""
+    total_quantity = store_instance.get_total_quantity()
+    print(f"Total quantity in store: {total_quantity}")
 
 
-def show_menu_and_get_choice():
-    """Show the menu until the user enters a valid choice."""
-    while True:
-        print_menu()
-        try:
-            choice = int(input("Please choose a number: "))
-        except ValueError:
-            print("Error with your choice! Try again!")
-            continue
-
-        if choice in MENU:
-            return choice
-
-        print("Error with your choice! Try again!")
+def get_selected_quantity(product, shopping_list):
+    """Return the quantity already selected for a product."""
+    return sum(
+        quantity
+        for selected_product, quantity in shopping_list
+        if selected_product is product
+    )
 
 
-def show_products(best_buy):
-    """Print all active products in the store."""
-    products = best_buy.get_all_products()
-    print_product_list(products)
+def make_order(store_instance):
+    """Collect order items from the user and place the order."""
+    product_list = store_instance.get_all_products()
 
+    if not product_list:
+        print("No active products available.")
+        return
 
-def show_total_amount(best_buy):
-    """Print the total quantity of items in the store."""
-    print(f"Total of {best_buy.get_total_quantity()} items in store")
-
-
-def make_order(best_buy):
-    """Collect products from the user and process an order."""
-    products = best_buy.get_all_products()
-    order_list = []
-
-    print()
-    print("When you want to finish order, enter empty text.")
-    print_product_list(products)
+    shopping_list = []
+    list_products(store_instance)
 
     while True:
-        product_choice = input("Which product # do you want? ")
-        if product_choice == "":
+        product_number = input("Product number: ")
+        if product_number == "":
             break
 
-        quantity_choice = input("What amount do you want? ")
+        try:
+            product_index = int(product_number) - 1
+            if product_index < 0 or product_index >= len(product_list):
+                print("Invalid product number.")
+                continue
+        except ValueError:
+            print("Please enter a valid product number.")
+            continue
+
+        amount = input("Amount: ")
 
         try:
-            product_index = int(product_choice) - 1
-            quantity = int(quantity_choice)
-            if product_index < 0 or product_index >= len(products):
-                raise ValueError
-            order_list.append((products[product_index], quantity))
+            quantity = int(amount)
         except ValueError:
-            print("Error adding product!")
-        else:
-            print("Product added to list!")
+            print("Please enter a valid amount.")
+            continue
 
-    total_price = best_buy.order(order_list)
-    print("********")
+        if quantity <= 0:
+            print("Amount must be greater than zero.")
+            continue
+
+        selected_product = product_list[product_index]
+        selected_quantity = get_selected_quantity(
+            selected_product,
+            shopping_list,
+        )
+        available_quantity = selected_product.get_quantity() - selected_quantity
+
+        if quantity > available_quantity:
+            print("Not enough products in stock.")
+            continue
+
+        shopping_list.append((selected_product, quantity))
+        print("Product added to order.")
+
+    if not shopping_list:
+        print("No products selected. Order cancelled.")
+        return
+
+    try:
+        total_price = store_instance.order(shopping_list)
+    except Exception as error:
+        print(f"Order failed: {error}")
+        return
+
     print(f"Order made! Total payment: ${total_price}")
 
 
-def start(best_buy):
-    """Run the main store menu loop."""
+def start(store_instance):
+    """Run the main menu until the user quits."""
     while True:
-        choice = show_menu_and_get_choice()
+        show_menu()
+        choice = input("Please choose a number: ")
 
-        if choice == 1:
-            show_products(best_buy)
-        elif choice == 2:
-            show_total_amount(best_buy)
-        elif choice == 3:
-            make_order(best_buy)
-        elif choice == 4:
+        if choice == "1":
+            list_products(store_instance)
+        elif choice == "2":
+            show_total_quantity(store_instance)
+        elif choice == "3":
+            make_order(store_instance)
+        elif choice == "4":
+            print("Goodbye!")
             break
+        else:
+            print("Invalid menu choice.")
 
 
 def main():
-    """Create the store and start the console application."""
-    product_list = [
-        Product("MacBook Air M2", price=1450, quantity=100),
-        Product("Bose QuietComfort Earbuds", price=250, quantity=500),
-        Product("Google Pixel 7", price=500, quantity=250),
-    ]
-    best_buy = Store(product_list)
-    start(best_buy)
+    """Set up the store and start the command line interface."""
+    store_instance = setup_store()
+    start(store_instance)
 
 
 if __name__ == "__main__":
