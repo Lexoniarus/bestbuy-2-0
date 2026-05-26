@@ -1,6 +1,6 @@
-"""Store model for the Best Buy console application."""
+"""Store model for the Best Buy store application."""
 
-from products import Product
+import products
 
 
 class Store:
@@ -12,7 +12,7 @@ class Store:
 
     def add_product(self, product):
         """Add a product to the store."""
-        if not isinstance(product, Product):
+        if not isinstance(product, products.Product):
             raise TypeError("Only Product instances can be added")
         self.products.append(product)
 
@@ -32,14 +32,11 @@ class Store:
             if product.is_active()
         ]
 
-    def order(self, list_of_items):
+    def order(self, shopping_list):
         """Process an order and return the total purchase price."""
         total_price = 0
 
-        for product, quantity in list_of_items:
-            try:
-                total_price += product.buy(quantity)
-            except Exception:
-                print("Error while making order!")
+        for product, quantity in shopping_list:
+            total_price += product.buy(quantity)
 
         return total_price
