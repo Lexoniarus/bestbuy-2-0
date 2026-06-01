@@ -10,6 +10,16 @@ class Store:
         """Initialize a store with a list of products."""
         self.products = list(product_list)
 
+    def __contains__(self, product):
+        """Return whether a product is in the store."""
+        return product in self.products
+
+    def __add__(self, other):
+        """Combine two stores into a new Store instance."""
+        if not isinstance(other, Store):
+            return NotImplemented
+        return Store(self.products + other.products)
+
     def add_product(self, product):
         """Add a product to the store."""
         if not isinstance(product, products.Product):
@@ -37,6 +47,6 @@ class Store:
         total_price = 0
 
         for product, quantity in shopping_list:
-            total_price += product.buy(quantity)
+            total_price += product.buy(int(quantity))
 
         return total_price

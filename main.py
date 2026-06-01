@@ -55,7 +55,7 @@ def list_products(store_instance):
         return
 
     for index, product in enumerate(product_list, start=1):
-        print(f"{index}. {product.show()}")
+        print(f"{index}. {product}")
 
 
 def show_total_quantity(store_instance):
