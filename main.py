@@ -98,7 +98,9 @@ def make_order(store_instance):
             selected_product,
             shopping_list,
         )
-        available_quantity = selected_product.get_quantity() - selected_quantity
+        available_quantity = (
+            selected_product.get_quantity() - selected_quantity
+        )
 
         if quantity > available_quantity:
             print("Not enough products in stock.")
