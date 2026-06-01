@@ -14,6 +14,13 @@ def setup_store():
             quantity=500,
         ),
         products.Product("Google Pixel 7", price=500, quantity=250),
+        products.NonStockedProduct("Windows License", price=125),
+        products.LimitedProduct(
+            "Shipping",
+            price=10,
+            quantity=250,
+            maximum=1,
+        ),
     ]
     return store.Store(product_list)
 
@@ -98,13 +105,24 @@ def make_order(store_instance):
             selected_product,
             shopping_list,
         )
-        available_quantity = (
-            selected_product.get_quantity() - selected_quantity
-        )
-
-        if quantity > available_quantity:
-            print("Not enough products in stock.")
+        if (
+            isinstance(selected_product, products.LimitedProduct)
+            and selected_quantity + quantity > selected_product.maximum
+        ):
+            print(
+                f"Only {selected_product.maximum} is allowed "
+                "from this product per order."
+            )
             continue
+
+        if not isinstance(selected_product, products.NonStockedProduct):
+            available_quantity = (
+                selected_product.get_quantity() - selected_quantity
+            )
+
+            if quantity > available_quantity:
+                print("Not enough products in stock.")
+                continue
 
         shopping_list.append((selected_product, quantity))
         print("Product added to order.")

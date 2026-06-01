@@ -30,6 +30,8 @@ class Product:
         self.quantity = quantity
         if self.quantity == 0:
             self.deactivate()
+        else:
+            self.activate()
 
     def is_active(self):
         """Return True when the product is active, otherwise False."""
@@ -45,7 +47,7 @@ class Product:
 
     def show(self):
         """Return a readable product description."""
-        return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}"
+        return f"{self.name}, Price: ${self.price}, Quantity: {self.quantity}"
 
     def buy(self, quantity):
         """Buy a quantity, reduce stock, and return the total price."""
@@ -59,3 +61,56 @@ class Product:
         total_price = float(self.price * quantity)
         self.set_quantity(self.quantity - quantity)
         return total_price
+
+
+class NonStockedProduct(Product):
+    """Represent a product with unlimited stock."""
+
+    def __init__(self, name, price):
+        """Initialize a non-stocked product."""
+        super().__init__(name, price, quantity=0)
+        self.activate()
+
+    def set_quantity(self, quantity):
+        """Keep non-stocked products at quantity zero."""
+        self.quantity = 0
+        self.activate()
+
+    def show(self):
+        """Return a readable non-stocked product description."""
+        return f"{self.name}, Price: ${self.price}, Quantity: Unlimited"
+
+    def buy(self, quantity):
+        """Buy a non-stocked product without changing stock."""
+        if quantity <= 0:
+            raise ValueError("Quantity must be greater than zero")
+        if not self.is_active():
+            raise ValueError("Inactive products cannot be bought")
+
+        return float(self.price * quantity)
+
+
+class LimitedProduct(Product):
+    """Represent a product with a maximum quantity per order."""
+
+    def __init__(self, name, price, quantity, maximum=1):
+        """Initialize a limited product."""
+        super().__init__(name, price, quantity)
+        if maximum <= 0:
+            raise ValueError("Maximum must be greater than zero")
+        self.maximum = maximum
+
+    def show(self):
+        """Return a readable limited product description."""
+        return (
+            f"{self.name}, Price: ${self.price}, Limited to {self.maximum} "
+            "per order!"
+        )
+
+    def buy(self, quantity):
+        """Buy a product only when it is within the order limit."""
+        if quantity > self.maximum:
+            raise ValueError(
+                f"Only {self.maximum} is allowed from this product!"
+            )
+        return super().buy(quantity)
