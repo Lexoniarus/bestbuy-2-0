@@ -17,10 +17,25 @@ class Product:
         self.price = price
         self.quantity = quantity
         self.active = True
+        self.promotion = None
+
+    def get_promotion(self):
+        """Return the assigned promotion, if there is one."""
+        return self.promotion
+
+    def set_promotion(self, promotion):
+        """Assign a promotion to this product."""
+        self.promotion = promotion
 
     def get_quantity(self):
         """Return the current product quantity."""
         return self.quantity
+
+    def get_promotion_name(self):
+        """Return the promotion name or None when no promotion is set."""
+        if self.promotion:
+            return self.promotion.name
+        return "None"
 
     def set_quantity(self, quantity):
         """Set the product quantity and deactivate it when it reaches zero."""
@@ -47,7 +62,10 @@ class Product:
 
     def show(self):
         """Return a readable product description."""
-        return f"{self.name}, Price: ${self.price}, Quantity: {self.quantity}"
+        return (
+            f"{self.name}, Price: ${self.price}, Quantity: {self.quantity}, "
+            f"Promotion: {self.get_promotion_name()}"
+        )
 
     def buy(self, quantity):
         """Buy a quantity, reduce stock, and return the total price."""
@@ -58,8 +76,11 @@ class Product:
         if not self.is_active():
             raise ValueError("Inactive products cannot be bought")
 
-        total_price = float(self.price * quantity)
         self.set_quantity(self.quantity - quantity)
+        if self.promotion:
+            return self.promotion.apply_promotion(self, quantity)
+
+        total_price = float(self.price * quantity)
         return total_price
 
 
@@ -78,7 +99,10 @@ class NonStockedProduct(Product):
 
     def show(self):
         """Return a readable non-stocked product description."""
-        return f"{self.name}, Price: ${self.price}, Quantity: Unlimited"
+        return (
+            f"{self.name}, Price: ${self.price}, Quantity: Unlimited, "
+            f"Promotion: {self.get_promotion_name()}"
+        )
 
     def buy(self, quantity):
         """Buy a non-stocked product without changing stock."""
@@ -87,6 +111,8 @@ class NonStockedProduct(Product):
         if not self.is_active():
             raise ValueError("Inactive products cannot be bought")
 
+        if self.promotion:
+            return self.promotion.apply_promotion(self, quantity)
         return float(self.price * quantity)
 
 
@@ -104,7 +130,7 @@ class LimitedProduct(Product):
         """Return a readable limited product description."""
         return (
             f"{self.name}, Price: ${self.price}, Limited to {self.maximum} "
-            "per order!"
+            f"per order!, Promotion: {self.get_promotion_name()}"
         )
 
     def buy(self, quantity):
